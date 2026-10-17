@@ -1,23 +1,30 @@
-import unitConvert, { type Unit as LibraryUnit } from "convert";
+import {
+  affineUnit,
+  convertInDimension,
+  linearUnit,
+  type DimensionDefinition,
+  type UnitModel,
+} from "./engine.ts";
 
 export type Unit = {
   name: string;
   symbol: string;
   factor: number;
   categoryId: string;
-  libraryUnit?: LibraryUnit;
 };
 
 export type Category = {
   id: string;
   name: string;
   icon: string;
+  /** Dimension grouping units that may legitimately convert into each other. */
+  dimension: string;
   units: Unit[];
   temperature?: boolean;
   assumption?: string;
 };
 
-type UnitDefinition = Omit<Unit, "categoryId">;
+type UnitDefinition = Omit<Unit, "categoryId" | "dimension">;
 
 const u = (name: string, symbol: string, factor: number): UnitDefinition => ({
   name,
@@ -25,104 +32,25 @@ const u = (name: string, symbol: string, factor: number): UnitDefinition => ({
   factor,
 });
 
-const LIBRARY_ALIASES: Readonly<Record<string, LibraryUnit>> = {
-  "length:mm": "mm",
-  "length:cm": "cm",
-  "length:m": "m",
-  "length:km": "km",
-  "length:µm": "µm",
-  "length:nm": "nm",
-  "length:in": "in",
-  "length:ft": "ft",
-  "length:yd": "yd",
-  "length:mi": "mi",
-  "length:nmi": "nautical miles",
-  "mass:µg": "µg",
-  "mass:mg": "mg",
-  "mass:g": "g",
-  "mass:kg": "kg",
-  "mass:t": "metric tons",
-  "mass:oz": "oz",
-  "mass:lb": "lb",
-  "mass:st": "st",
-  "area:mm²": "mm²",
-  "area:cm²": "cm²",
-  "area:m²": "m²",
-  "area:ha": "ha",
-  "area:km²": "km²",
-  "area:in²": "in²",
-  "area:ft²": "ft²",
-  "area:ac": "ac",
-  "area:mi²": "mi²",
-  "volume:mL": "mL",
-  "volume:L": "L",
-  "volume:cm³": "cm³",
-  "volume:m³": "m³",
-  "volume:tsp US": "US teaspoon",
-  "volume:tbsp US": "US tablespoon",
-  "volume:fl oz US": "US fluid ounce",
-  "volume:cup US": "cup",
-  "volume:gal US": "US liquid gallon",
-  "volume:gal imp": "imperial gallon",
-  "volume:ft³": "cubic foot",
-  "pressure:Pa": "Pa",
-  "pressure:kPa": "kPa",
-  "pressure:MPa": "MPa",
-  "pressure:bar": "bar",
-  "pressure:atm": "atm",
-  "pressure:psi": "psi",
-  "energy:J": "J",
-  "energy:kJ": "kJ",
-  "energy:Wh": "Wh",
-  "energy:kWh": "kWh",
-  "power:W": "W",
-  "power:kW": "kW",
-  "power:MW": "MW",
-  "power:hp": "hp",
-  "force:N": "N",
-  "force:kN": "kN",
-  "force:lbf": "lbf",
-  "frequency:Hz": "Hz",
-  "frequency:kHz": "kHz",
-  "frequency:MHz": "MHz",
-  "frequency:GHz": "GHz",
-  "data:bit": "bit",
-  "data:B": "B",
-  "data:KB": "KB",
-  "data:MB": "MB",
-  "data:GB": "GB",
-  "data:TB": "TB",
-  "data:KiB": "KiB",
-  "data:MiB": "MiB",
-  "data:GiB": "GiB",
-  "data:TiB": "TiB",
-  "angle:°": "°",
-  "angle:rad": "rad",
-  "angle:gon": "gon",
-  "angle:′": "arcminute",
-  "angle:″": "arcsecond",
-  "illuminance:lx": "lx",
-  "illuminance:fc": "foot-candle",
-};
-
 function category(
   id: string,
   name: string,
   icon: string,
   definitions: UnitDefinition[],
-  options: Pick<Category, "temperature" | "assumption"> = {},
+  options: Pick<Category, "temperature" | "assumption"> & {
+    dimension?: string;
+  } = {},
 ): Category {
   return {
     id,
     name,
     icon,
-    ...options,
+    dimension: options.dimension ?? id,
+    ...(options.temperature !== undefined ? { temperature: options.temperature } : {}),
+    ...(options.assumption !== undefined ? { assumption: options.assumption } : {}),
     units: definitions.map((definition) => ({
       ...definition,
       categoryId: id,
-      ...(LIBRARY_ALIASES[`${id}:${definition.symbol}`]
-        ? { libraryUnit: LIBRARY_ALIASES[`${id}:${definition.symbol}`] }
-        : {}),
     })),
   };
 }
@@ -309,6 +237,60 @@ export const categories: Category[] = [
   ]),
 ];
 
+export function getUnit(selectedCategory: Category, symbol: string): Unit | undefined {
+  return selectedCategory.units.find((item) => item.symbol === symbol);
+}
+
+export function categoryById(id: string): Category | undefined {
+  return categories.find((item) => item.id === id);
+}
+
+/**
+ * Canonical base metadata for a category's dimension. Temperature is anchored
+ * to the Kelvin scale so absolute zero can be enforced; every other dimension
+ * is anchored to its factor-1 unit.
+ */
+export function dimensionDefinition(selectedCategory: Category): DimensionDefinition {
+  if (selectedCategory.id === "temperature") {
+    return { id: "temperature", base: "kelvin", baseMinimum: 0, tolerance: 1e-9 };
+  }
+  const baseUnit = selectedCategory.units.find((item) => item.factor === 1);
+  return {
+    id: selectedCategory.dimension,
+    base: baseUnit?.name ?? selectedCategory.name,
+  };
+}
+
+/** Affine/linear model for a built-in unit relative to its dimension base. */
+export function unitModel(selectedCategory: Category, unit: Unit): UnitModel {
+  if (selectedCategory.id === "temperature") {
+    if (unit.symbol === "°C") return affineUnit(1, 273.15);
+    if (unit.symbol === "°F") return affineUnit(5 / 9, 273.15 - (32 * 5) / 9);
+    if (unit.symbol === "K") return affineUnit(1, 0);
+  }
+  return linearUnit(unit.factor);
+}
+
+/**
+ * Convert between two arbitrary unit models inside a category's dimension.
+ * Used by the custom-unit system where one or both models may be user-defined.
+ */
+export function convertModels(
+  selectedCategory: Category,
+  value: number,
+  from: UnitModel,
+  to: UnitModel,
+  options: { allowNonFiniteResult?: boolean } = {},
+): number {
+  return convertInDimension(
+    dimensionDefinition(selectedCategory),
+    value,
+    from,
+    to,
+    options,
+  );
+}
+
 export function convert(
   selectedCategory: Category,
   value: number,
@@ -325,23 +307,6 @@ export function convert(
     throw new RangeError("Cannot convert between incompatible unit categories.");
   }
 
-  if (selectedCategory.temperature) {
-    const celsius =
-      from.symbol === "°F"
-        ? ((value - 32) * 5) / 9
-        : from.symbol === "K"
-          ? value - 273.15
-          : value;
-    if (celsius < -273.15 - 1e-12) {
-      throw new RangeError("Temperature cannot be below absolute zero.");
-    }
-    return to.symbol === "°F"
-      ? (celsius * 9) / 5 + 32
-      : to.symbol === "K"
-        ? celsius + 273.15
-        : celsius;
-  }
-
   if (selectedCategory.id === "fuel") {
     const kmPerLiter =
       from.symbol === "L/100 km" ? (value === 0 ? NaN : 100 / value) : value * from.factor;
@@ -351,13 +316,11 @@ export function convert(
     return kmPerLiter / to.factor;
   }
 
-  if (from.libraryUnit && to.libraryUnit) {
-    return unitConvert(value, from.libraryUnit).to(to.libraryUnit);
-  }
-
-  return (value * from.factor) / to.factor;
-}
-
-export function getUnit(category: Category, symbol: string): Unit | undefined {
-  return category.units.find((item) => item.symbol === symbol);
+  return convertModels(
+    selectedCategory,
+    value,
+    unitModel(selectedCategory, from),
+    unitModel(selectedCategory, to),
+    { allowNonFiniteResult: true },
+  );
 }

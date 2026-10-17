@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build & Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Install dependencies
+        run: pnpm install
+      - name: Typecheck (libs + artifacts + scripts)
+        run: pnpm run --sequential typecheck
+      - name: Test (app libs + API)
+        shell: bash
+        run: |
+          node --experimental-strip-types --test artifacts/omni-convert/src/lib/*.test.ts
+          node --experimental-strip-types --test artifacts/api-server/test/currency-rates.test.mjs
+      - name: Build app
+        run: pnpm --filter @workspace/omni-convert run build

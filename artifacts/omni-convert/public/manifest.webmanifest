@@ -1,0 +1,29 @@
+{
+  "name": "OmniConvert Studio — Unit & Currency Converter",
+  "short_name": "OmniConvert",
+  "description": "Convert measurements across 22 categories, run batch CSV conversions, define custom units, and compare live currency rates. Core tools work offline.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f8f6f1",
+  "theme_color": "#2a7968",
+  "categories": ["utilities", "productivity"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
