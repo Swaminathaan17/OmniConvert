@@ -1,0 +1,226 @@
+# Build OmniConvert — Universal Unit & Currency Converter
+
+Act as a senior full-stack engineer, product designer, and software architect. Build a complete, production-quality web application named **OmniConvert**, a universal measurement and currency conversion platform.
+
+Do not build just a prototype, static mockup, or landing page. Build a fully functional application with working conversions, responsive UI, validation, persistent preferences, and real currency exchange-rate integration.
+
+## 1. Product Vision
+
+Create one place where users can convert virtually any compatible measurement unit and exchange between 15 major world currencies.
+
+The application should feel like a polished, premium SaaS product: intuitive, fast, accessible, accurate, and visually impressive.
+
+## 2. Technology Stack
+
+Use:
+- Next.js with App Router
+- TypeScript with strict type checking
+- Tailwind CSS
+- A consistent, reusable component architecture
+- Lucide icons
+- A reliable unit conversion library, supplemented with custom formulas where required
+- A reputable currency exchange-rate API with a replaceable provider adapter
+- Server-side API routes for currency requests
+- Local storage for favorites, recent conversions, and user preferences
+- Recharts for historical currency charts if the selected API supports historical data
+
+Use current, stable, mutually compatible package versions. Do not add unnecessary dependencies.
+
+## 3. Unit Conversion Categories
+
+Implement the following categories with multiple commonly used units in each.
+
+1. Length: millimeters, centimeters, meters, kilometers, micrometers, nanometers, inches, feet, yards, miles, nautical miles.
+2. Mass and weight: micrograms, milligrams, grams, kilograms, metric tonnes, ounces, pounds, stones.
+3. Temperature: Celsius, Fahrenheit, Kelvin.
+4. Area: square millimeters, square centimeters, square meters, hectares, square kilometers, square inches, square feet, acres, square miles.
+5. Volume: milliliters, liters, cubic centimeters, cubic meters, teaspoons, tablespoons, US fluid ounces, US cups, US gallons, imperial gallons, cubic feet.
+6. Speed: meters per second, kilometers per hour, miles per hour, feet per second, knots.
+7. Time: milliseconds, seconds, minutes, hours, days, weeks, months, years. Clearly document assumptions for month and year conversions.
+8. Pressure: pascals, kilopascals, megapascals, bars, atmospheres, PSI, millimeters of mercury.
+9. Energy: joules, kilojoules, calories, kilocalories, watt-hours, kilowatt-hours, electronvolts, BTU.
+10. Power: watts, kilowatts, megawatts, horsepower.
+11. Force: newtons, kilonewtons, pound-force.
+12. Frequency: hertz, kilohertz, megahertz, gigahertz.
+13. Data storage: bits, bytes, kilobytes, megabytes, gigabytes, terabytes, kibibytes, mebibytes, gibibytes, tebibytes. Distinguish decimal SI units from binary IEC units.
+14. Data transfer rate: bits per second, kilobits per second, megabits per second, gigabits per second, bytes per second, megabytes per second.
+15. Angle: degrees, radians, gradians, arcminutes, arcseconds.
+16. Density: kilograms per cubic meter, grams per cubic centimeter, grams per milliliter, pounds per cubic foot.
+17. Torque: newton-meters, pound-feet, pound-inches.
+18. Fuel economy: kilometers per liter, liters per 100 kilometers, miles per US gallon, miles per imperial gallon. Handle inverse relationships correctly.
+19. Electric current: amperes, milliamperes, microamperes.
+20. Voltage: volts, millivolts, kilovolts.
+21. Electrical resistance: ohms, kilohms, megohms.
+22. Illuminance: lux, foot-candles.
+
+Keep unit definitions in a centralized, typed registry so additional categories and units can be added without rewriting the interface.
+
+Use a common conversion engine for compatible linear units, and explicit conversion functions for temperature, fuel economy, and any other nonlinear or offset-based units.
+
+Never allow conversion between incompatible dimensions.
+
+## 4. Currency Converter — 15 Currencies
+
+Support exactly these initial 15 currencies:
+
+- INR — Indian Rupee
+- USD — US Dollar
+- EUR — Euro
+- GBP — British Pound
+- JPY — Japanese Yen
+- CNY — Chinese Yuan
+- AED — UAE Dirham
+- SAR — Saudi Riyal
+- SGD — Singapore Dollar
+- AUD — Australian Dollar
+- CAD — Canadian Dollar
+- CHF — Swiss Franc
+- HKD — Hong Kong Dollar
+- KRW — South Korean Won
+- BDT — Bangladeshi Taka
+
+Requirements:
+
+- Convert any supported currency to any other supported currency.
+- Use actual exchange-rate data from a reputable API. Never fabricate rates or hardcode example rates as live data.
+- Put API access behind a server-side route and a provider abstraction.
+- Keep secrets in environment variables, with a documented `.env.example`.
+- Cache responses responsibly and display the last-updated timestamp.
+- Show the exchange rate used for each conversion.
+- Support swapping source and destination currencies.
+- Include a refresh action, loading state, error state, and retry mechanism.
+- Display a clear indication when rates are stale or unavailable.
+- Handle currencies with different decimal precision, including JPY and KRW.
+- Add an optional historical exchange-rate chart only when the chosen provider supports historical data.
+- Clearly disclose that displayed exchange rates may differ from rates charged by banks and payment providers.
+
+If API configuration is missing, explain how to configure it. Never silently substitute fabricated rates. If necessary, allow a clearly labeled offline/demo mode that cannot be mistaken for live exchange rates.
+
+## 5. Main User Interface
+
+Build a beautiful, responsive application with the following layout.
+
+### Header
+- OmniConvert logo and name
+- Navigation: Converter, Currency, Favorites, History
+- Theme toggle
+- Responsive mobile navigation
+
+### Main converter workspace
+- A searchable category selector
+- A numeric amount input
+- A source-unit selector
+- A destination-unit selector
+- A prominent swap button
+- A large, readable converted result
+- A copy-result button
+- A reset button
+- A compact explanation of the conversion formula or rate
+
+Update the result instantly as the user types or changes units. Do not reload the page for ordinary conversions.
+
+### Multi-unit results
+Provide an optional expanded view that converts one input into every other unit in the selected category simultaneously.
+
+For example, entering 1 kilometer should display the equivalent values in meters, centimeters, miles, feet, and other supported length units.
+
+### Currency workspace
+Give currency conversion a dedicated, polished interface with currency codes, names, symbols, country or currency indicators, exchange-rate information, and a historical chart when available.
+
+### Search
+Implement a global searchable unit and category selector. Users should be able to search by unit name, symbol, or abbreviation. For example: `km`, `kilometers`, `°F`, `psi`, `TB`, and `acre`.
+
+### Favorites
+Allow users to pin commonly used conversions. Favorites must persist across page reloads.
+
+### Recent history
+Keep a configurable, bounded list of recent conversions. Provide clear-history functionality and allow users to repeat a previous conversion.
+
+### Shareable conversions
+Support shareable URLs containing the category, amount, source unit, and destination unit. Opening a shared URL must restore the relevant converter state.
+
+### Precision controls
+Offer sensible default precision, configurable decimal places, and standard rounding. Handle scientific notation, invalid values, very large numbers, and very small numbers without crashing.
+
+## 6. Design System
+
+Use a premium, modern visual identity rather than a generic template.
+
+- Support both light and dark themes.
+- Use a restrained color palette, excellent typography, and consistent spacing.
+- Make the conversion result the main visual focus.
+- Use subtle borders, clean cards, tasteful shadows, and smooth transitions.
+- Use Lucide icons consistently.
+- Avoid excessive gradients, oversized headings, unnecessary animations, and visual clutter.
+- Ensure the interface works on desktop, tablet, and mobile.
+- Add accessible labels, keyboard navigation, visible focus states, and appropriate color contrast.
+- Respect reduced-motion preferences.
+- Include polished empty states, loading skeletons, inline validation, and error messages.
+
+The converter should be immediately usable without requiring registration.
+
+## 7. Engineering Requirements
+
+- Use TypeScript throughout.
+- Separate UI components, unit definitions, conversion logic, currency services, API routes, and utility functions.
+- Validate user input and API responses.
+- Handle negative values where mathematically appropriate.
+- Correctly handle zero, decimal values, floating-point precision, and invalid input.
+- Reject non-finite inputs such as NaN and Infinity.
+- Avoid rounding intermediate conversion calculations unnecessarily.
+- Distinguish absolute temperature from temperature differences.
+- Distinguish mass from force despite the colloquial use of "weight."
+- Distinguish decimal and binary data units.
+- Document assumptions for units whose definitions vary by region.
+- Include meaningful error handling and user-friendly feedback.
+- Avoid unnecessary database or authentication requirements for the initial release.
+- Keep the code maintainable and ready for future additions.
+
+## 8. Testing
+
+Write automated tests for the conversion engine and critical application behavior.
+
+Include:
+- Standard length, mass, area, and volume conversions
+- Celsius-to-Fahrenheit and Kelvin conversions
+- Temperature below absolute zero
+- Fuel economy inverse conversions
+- Decimal and binary data-unit conversions
+- Zero, negative, and very small values
+- Invalid and non-finite inputs
+- Incompatible unit categories
+- Round-trip conversion accuracy
+- Currency API errors, missing configuration, and stale responses
+- Favorites and history persistence
+
+Use tolerances for floating-point calculations instead of requiring exact binary equality.
+
+## 9. SEO and Performance
+
+- Add page titles, descriptions, and appropriate metadata.
+- Use semantic HTML and accessible form controls.
+- Optimize initial loading and avoid unnecessary client-side JavaScript.
+- Provide useful URLs for major converter categories.
+- Add a useful landing page with direct access to popular conversions.
+- Avoid displaying fabricated SEO claims or unsupported exchange-rate information.
+
+## 10. Deliverables and Acceptance Criteria
+
+Build the actual working application, not merely a plan or a collection of mockup screens.
+
+Before finishing:
+
+1. Ensure all listed measurement categories are selectable and their units work.
+2. Verify that conversions are mathematically correct.
+3. Verify that all 15 currency codes are available.
+4. Verify that currency conversion uses real API data when configured.
+5. Verify that the application remains usable when the currency API fails.
+6. Verify that theme, favorites, and history work.
+7. Verify responsive layouts and accessibility.
+8. Run the available tests, linting, and type checks, and fix errors.
+9. Confirm that the project starts successfully using the documented commands.
+10. Provide a README with setup instructions, API configuration, architecture, test commands, and deployment instructions.
+
+Do not claim tests passed unless they were actually run.
+
+Start by inspecting the project environment, then implement the application in working stages. Make reasonable design and engineering decisions without asking me about every small detail. Prioritize a complete, accurate, polished product over unnecessary complexity.

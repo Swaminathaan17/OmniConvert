@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "OmniConvert"
+description = "A responsive universal converter for everyday measurements and 15 major world currencies, with accurate unit math, fresh exchange rates, and personal conversion history."
+version = "1.0.0"
+id = "artifacts/omni-convert"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23990
+
+[services.development]
+run = "pnpm --filter @workspace/omni-convert run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/omni-convert", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/omni-convert/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23990"
+BASE_PATH = "/"

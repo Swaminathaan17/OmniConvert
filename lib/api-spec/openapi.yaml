@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: currency
+    description: Exchange-rate operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,45 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /currency/rates:
+    get:
+      operationId: getCurrencyRates
+      tags: [currency]
+      summary: Get current exchange rates
+      description: Returns current exchange rates from the configured live provider, including provider update time and stale-cache status.
+      parameters:
+        - name: base
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [INR, USD, EUR, GBP, JPY, CNY, AED, SAR, SGD, AUD, CAD, CHF, HKD, KRW, BDT]
+        - name: refresh
+          in: query
+          required: false
+          description: Bypass the fresh server cache and request an update from the provider.
+          schema:
+            type: string
+            enum: ["1"]
+      responses:
+        "200":
+          description: Exchange rates returned by the live provider
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrencyRatesResponse"
+        "400":
+          description: Unsupported base currency
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "503":
+          description: Exchange-rate provider is unavailable and no cached rates are available
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +74,30 @@ components:
           type: string
       required:
         - status
+    CurrencyRatesResponse:
+      type: object
+      properties:
+        baseCode:
+          type: string
+        rates:
+          type: object
+          additionalProperties:
+            type: number
+        updatedAt:
+          type: string
+          format: date-time
+        fetchedAt:
+          type: string
+          format: date-time
+        provider:
+          type: string
+        stale:
+          type: boolean
+      required: [baseCode, rates, updatedAt, fetchedAt, provider, stale]
+    ApiError:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
 
